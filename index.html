@@ -1,314 +1,505 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>50 Startups: Multiple Linear Regression &amp; Feature Selection Explorer</title>
-  <meta name="description" content="Interactive CRISP-DM explorer for the 50 Startups dataset: compare Lasso, Forward SFS, RFE, ElasticNet and Exhaustive Search feature selection for multiple linear regression, with coefficient tests, VIF, residual diagnostics and a live profit predictor." />
+  <title>MLR Analytics Studio | DIC-2 Feature Selection &amp; Regression Intelligence</title>
+  <meta name="description" content="DIC-2 Multiple Linear Regression Studio: Standardized CRISP-DM feature selection across 50 Startups and Boston Housing datasets with Lasso, Forward SFS, RFE, ElasticNet, and Exhaustive search." />
 
+  <!-- Google Fonts: Outfit, Plus Jakarta Sans, JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Top Header -->
-  <header class="top-header">
-    <div class="header-inner">
-      <div>
-        <nav class="breadcrumbs" aria-label="Breadcrumb">
-          <a href="#"><i class="fa-solid fa-house"></i> Home</a>
-          <i class="fa-solid fa-chevron-right sep"></i>
-          <a href="#">Regression Analysis</a>
-          <i class="fa-solid fa-chevron-right sep"></i>
-          <span class="crumb-current">50 Startups Feature Progression</span>
-        </nav>
-        <div class="header-title-group">
-          <h1>
-            <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i>
-            50 Startups Multiple Linear Regression Explorer
-            <span class="brand-badge">CRISP-DM</span>
-          </h1>
+  <!-- Ambient Glow Background -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i class="fa-solid fa-chart-network"></i>
+        </div>
+        <div>
+          <div class="brand-title">
+            <span>MLR Studio</span>
+            <span class="version-tag">DIC-2</span>
+          </div>
+          <div class="brand-subtitle">Multiple Linear Regression &amp; Parsimony Intelligence</div>
         </div>
       </div>
+
+      <!-- Problem / Dataset Switcher Tabs -->
+      <nav class="problem-switcher" aria-label="Dataset Switcher">
+        <button class="switcher-btn active" id="btnProblemStartup" data-problem="startup">
+          <i class="fa-solid fa-building-columns"></i>
+          <span>Problem 1: 50 Startups</span>
+          <span class="switcher-badge upload-badge">Primary Upload</span>
+        </button>
+        <button class="switcher-btn" id="btnProblemBoston" data-problem="boston">
+          <i class="fa-solid fa-city"></i>
+          <span>Problem 2: Boston Housing</span>
+          <span class="switcher-badge transfer-badge">Workflow Transfer</span>
+        </button>
+      </nav>
+
+      <!-- Utility Actions -->
       <div class="header-actions">
-        <a href="assets/50_Startups.csv" download class="ref-btn" id="btn-download-csv">
-          <i class="fa-solid fa-download"></i> Dataset CSV
+        <a id="btnDownloadCsv" href="assets/50_Startups.csv" download class="btn-action">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span class="action-label">Dataset CSV</span>
         </a>
-        <a href="https://statsunlock.com/multiple-linear-regression-calculator/" target="_blank" rel="noopener" class="ref-btn" id="btn-style-ref">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Style Ref: StatsUnlock
+        <a href="https://github.com/aghoniln/AIoT-DIC2-MultipleLR" target="_blank" rel="noopener" class="btn-action btn-highlight">
+          <i class="fa-brands fa-github"></i>
+          <span class="action-label">Repository</span>
         </a>
+        <button id="themeToggle" class="btn-action btn-icon-only" title="Toggle Theme" aria-label="Toggle Theme">
+          <i class="fa-solid fa-sun" id="themeIcon"></i>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="container">
+  <!-- Main Studio Canvas -->
+  <main class="studio-canvas">
 
-    <!-- Hero -->
-    <section class="hero-card" id="hero">
-      <h2>Feature Selection &amp; Parsimony Analysis</h2>
-      <p id="hero-text">
-        Compare 5 Machine Learning Feature Selection Algorithms (<strong>Lasso</strong>, <strong>Forward SFS</strong>,
-        <strong>RFE</strong>, <strong>ElasticNet</strong>, <strong>Exhaustive Search</strong>) against Baseline OLS.
-        Explore the bias-variance tradeoff across feature counts <em>k</em> = 1 … 5, pinpointing the
-        <strong>optimal sweet spot</strong> and the <strong>5-feature overfitting cliff</strong>.
-      </p>
-      <div class="hero-tags" id="hero-tags"></div>
-    </section>
-
-    <!-- Controls -->
-    <section class="controls-wrapper" aria-label="Model controls">
-      <span class="control-label"><i class="fa-solid fa-sliders"></i> 1. Select Feature Selection Algorithm</span>
-      <div class="tabs-pills" id="algoTabs"></div>
-      <span class="control-label" style="margin-top: 12px;"><i class="fa-solid fa-list-ol"></i> 2. Number of Features (k = 1 to 5)</span>
-      <div class="k-selector-group" id="kSelectorGroup"></div>
-    </section>
-
-    <!-- Metrics -->
-    <section class="metrics-grid" id="metricsGrid" aria-label="Model metrics"></section>
-
-    <!-- Active predictors -->
-    <section class="chips-bar">
-      <div class="chips-left">
-        <span class="chips-title"><i class="fa-solid fa-check-double" style="color: var(--primary);"></i> Active Predictors (<span id="featuresCount">0</span>):</span>
-        <div id="featuresListChips" class="chips-list"></div>
-      </div>
-      <div id="parsimonyNotice" class="badge-tag badge-green notice"></div>
-    </section>
-
-    <!-- Dual charts -->
-    <section class="dual-charts-grid">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> RMSE by Number of Features</h3>
-            <div class="card-subtitle" id="rmseSubtitle">Lower is better.</div>
-          </div>
-          <span class="badge-tag badge-blue" id="rmseChartBadge"></span>
+    <!-- Executive Briefing & Architecture Overview -->
+    <section class="briefing-panel">
+      <div class="briefing-content">
+        <div class="panel-badge-row">
+          <span class="badge-pill pill-cyan"><i class="fa-solid fa-microchip"></i> Reusable CRISP-DM ML Pipeline</span>
+          <span class="badge-pill pill-violet" id="briefingDatasetTag">Topic 1 Focus</span>
+          <span class="badge-pill pill-emerald" id="briefingSweetTag">Sweet Spot: k=2</span>
         </div>
-        <div class="chart-container"><canvas id="rmseChart"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-arrow-trend-up" style="color: var(--accent-emerald);"></i> R-squared by Number of Features</h3>
-            <div class="card-subtitle" id="r2Subtitle">Higher is better.</div>
-          </div>
-          <span class="badge-tag badge-green" id="r2ChartBadge"></span>
+        <h1 class="briefing-title" id="briefingTitle">50 Startups: Venture Capital Profit Optimization</h1>
+        <p class="briefing-desc" id="briefingDesc">
+          Automated multiple linear regression benchmark across 5 feature selection strategies (<strong>Lasso L1</strong>, <strong>Forward SFS</strong>, <strong>Recursive Feature Elimination</strong>, <strong>ElasticNet</strong>, <strong>Exhaustive Combinatorial</strong>). Demonstrating bias-variance trade-offs, multicollinearity mitigation, and out-of-sample generalization.
+        </p>
+        <div class="workflow-notice">
+          <i class="fa-solid fa-lightbulb notice-icon"></i>
+          <span><strong>Assignment Architecture:</strong> Both <em>50 Startups</em> and <em>Boston Housing</em> execute the exact same parameterized scikit-learn feature-selection skill and CRISP-DM protocol. Use the top toggle to switch datasets instantly.</span>
         </div>
-        <div class="chart-container"><canvas id="r2Chart"></canvas></div>
+      </div>
+
+      <!-- Quick KPI Spark Summary Deck -->
+      <div class="briefing-stats">
+        <div class="quick-stat-card">
+          <span class="stat-label">Dataset Profile</span>
+          <span class="stat-num" id="statRowsCols">50 × 5</span>
+          <span class="stat-sub" id="statSplit">80% Train / 20% Test</span>
+        </div>
+        <div class="quick-stat-card">
+          <span class="stat-label">Optimal Model</span>
+          <span class="stat-num accent-green" id="statSweetModel">k = 2</span>
+          <span class="stat-sub" id="statSweetDetail">Min RMSE: $8,198.80</span>
+        </div>
+        <div class="quick-stat-card">
+          <span class="stat-label">Overfitting Cliff</span>
+          <span class="stat-num accent-amber" id="statOverfit">k = 5</span>
+          <span class="stat-sub" id="statOverfitDetail">Error Spike: +$939.19</span>
+        </div>
       </div>
     </section>
 
-    <!-- Equation -->
-    <section class="equation-card">
-      <div class="equation-title"><i class="fa-solid fa-square-root-variable"></i> Fitted OLS Regression Equation</div>
-      <div class="equation-formula" id="equationBox"></div>
-    </section>
+    <!-- Studio Workbench (Controls + Interactive Simulator) -->
+    <section class="workbench-grid">
 
-    <!-- Coefficients + calculator -->
-    <section class="calc-grid">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-table" style="color: var(--primary);"></i> Model Coefficients &amp; Statistical Tests</h3>
-            <div class="card-subtitle">Parameter estimates, standard errors, t-statistics, 95% CIs and VIF multicollinearity (training set, n = 40).</div>
+      <!-- Left Column: Model Engineering Workbench -->
+      <div class="workbench-col">
+
+        <!-- 1. Algorithm Selection Deck -->
+        <div class="studio-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-sliders"></i>
+              <span>1. Feature Selection Strategy</span>
+            </div>
+            <span class="toolbar-hint">Choose algorithmic heuristic</span>
+          </div>
+
+          <div class="algo-selection-deck" id="algoDeck">
+            <!-- Dynamically populated or rendered buttons -->
           </div>
         </div>
-        <div class="table-responsive">
-          <table class="data-table" id="coefTable">
-            <thead>
-              <tr>
-                <th>Predictor</th><th>Estimate (β)</th><th>Std. Error</th><th>t-Stat</th>
-                <th>p-Value</th><th>95% Conf. Int</th><th>VIF</th>
-              </tr>
-            </thead>
-            <tbody id="coefTableBody"></tbody>
-          </table>
+
+        <!-- 2. Feature Count & Parsimony Stepper -->
+        <div class="studio-card" style="margin-top: 16px;">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-list-ol"></i>
+              <span>2. Model Complexity &amp; Feature Budget (k = 1 … 5)</span>
+            </div>
+            <span class="toolbar-hint" id="kHint">Select feature count</span>
+          </div>
+
+          <div class="k-stepper-deck" id="kStepper">
+            <!-- k buttons -->
+          </div>
+
+          <!-- Active Features Pill Rack -->
+          <div class="active-features-rack">
+            <div class="rack-header">
+              <span class="rack-label"><i class="fa-solid fa-check-double"></i> Active Features (<span id="activeCount">2</span>):</span>
+              <span id="parsimonyTag" class="status-chip chip-green">Optimal Parsimony</span>
+            </div>
+            <div class="chips-flex" id="activeChipsList"></div>
+          </div>
         </div>
-        <div class="coef-chart-wrap">
-          <div class="mini-title"><i class="fa-solid fa-chart-bar"></i> Coefficient magnitude (β)</div>
-          <div class="chart-container small"><canvas id="coefChart"></canvas></div>
+
+        <!-- 3. Mathematical OLS Formulation Box -->
+        <div class="studio-card equation-studio-card" style="margin-top: 16px;">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-square-root-variable"></i>
+              <span>Fitted OLS Mathematical Equation</span>
+            </div>
+            <span class="status-chip chip-cyan" id="equationModelTag">Lasso · k=2</span>
+          </div>
+          <div class="equation-container">
+            <div class="equation-code" id="equationRender">
+              <!-- Equation populated here -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive Prediction & What-If Simulator -->
+      <div class="workbench-col">
+        <div class="studio-card simulator-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span id="simulatorTitle">Live Profit Prediction Lab</span>
+            </div>
+            <span class="status-chip chip-green"><i class="fa-solid fa-bolt"></i> Real-time</span>
+          </div>
+
+          <!-- Presets Bar -->
+          <div class="preset-bar">
+            <span class="preset-label">Scenarios:</span>
+            <div class="preset-buttons" id="presetButtons"></div>
+          </div>
+
+          <!-- Dynamic Form Inputs -->
+          <div class="simulator-inputs" id="simulatorInputs"></div>
+
+          <!-- Large Output Dashboard Card -->
+          <div class="simulator-display">
+            <div class="display-glow"></div>
+            <div class="display-label" id="displayTargetLabel">Predicted Net Profit</div>
+            <div class="display-value" id="displayTargetValue">$130,094.66</div>
+            <div class="display-formula" id="displayFormulaBreakdown"></div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-calculator" style="color: var(--accent-emerald);"></i> Live Profit Predictor</h3>
-            <div class="card-subtitle">Test predictions in real-time with the active model.</div>
-          </div>
-          <span class="badge-tag badge-green"><i class="fa-solid fa-bolt"></i> Real-time</span>
-        </div>
-        <div id="calcInputs"></div>
-        <div class="input-group" id="inputGroupState">
-          <div class="input-label-row"><span>State Location</span><span class="usage-tag" id="useState"></span></div>
-          <select id="selectState" class="input-field">
-            <option value="California">California (Reference)</option>
-            <option value="New York">New York</option>
-            <option value="Florida">Florida</option>
-          </select>
-        </div>
-        <div class="prediction-output-box">
-          <div class="pred-label">Predicted Startup Profit</div>
-          <div class="pred-value" id="predProfitOutput">$0.00</div>
-          <div class="pred-formula-note" id="predFormulaNote"></div>
-        </div>
-      </div>
     </section>
 
-    <!-- Actual vs predicted + residuals -->
-    <section class="dual-charts-grid" style="margin-top: 24px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Actual vs. Predicted Profit</h3>
-            <div class="card-subtitle">Test set (n = 10). Points on the dashed line are perfect predictions.</div>
-          </div>
-          <span class="badge-tag badge-blue" id="scatterBadge"></span>
-        </div>
-        <div class="chart-container"><canvas id="scatterChart"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-chart-column" style="color: var(--accent-amber);"></i> Residuals by Test Startup</h3>
-            <div class="card-subtitle">Actual − Predicted. Amber bars exceed $10,000.</div>
-          </div>
-          <span class="badge-tag badge-amber"><i class="fa-solid fa-ruler"></i> Residual plot</span>
-        </div>
-        <div class="chart-container"><canvas id="residChart"></canvas></div>
-      </div>
+    <!-- KPI Performance Metric Deck -->
+    <section class="kpi-ribbon" id="kpiRibbon">
+      <!-- 5 Modern KPI Cards -->
     </section>
 
-    <!-- Outliers -->
-    <section class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h3><i class="fa-solid fa-magnifying-glass" style="color: var(--accent-amber);"></i> Test Set Residuals &amp; Outliers Diagnostic</h3>
-          <div class="card-subtitle">Absolute residuals on the out-of-sample test set (10 startups).</div>
+    <!-- Visual Analytics Hub (Dual Charts + Residuals + Correlation) -->
+    <section class="visual-hub">
+
+      <!-- Row 1: Dual Complexity Charts -->
+      <div class="grid-2-col">
+        <div class="studio-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-chart-line accent-cyan"></i>
+              <span>RMSE Learning Curve by Feature Count (k)</span>
+            </div>
+            <span class="status-chip chip-cyan" id="badgeRmseChart">RMSE ($)</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartRmse"></canvas>
+          </div>
+          <div class="chart-caption" id="captionRmse">Lower is better. Out-of-sample generalization error on 20% test holdout.</div>
         </div>
-        <span class="badge-tag badge-blue"><i class="fa-solid fa-filter"></i> Sorted by |Residual|</span>
+
+        <div class="studio-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-chart-mixed-up-circle-currency accent-green"></i>
+              <span>R² Variance Explained Ratio</span>
+            </div>
+            <span class="status-chip chip-green" id="badgeR2Chart">Peak Fit</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartR2"></canvas>
+          </div>
+          <div class="chart-caption" id="captionR2">Higher is better. Measures variance in target explained by the model.</div>
+        </div>
       </div>
-      <div class="table-responsive">
-        <table class="data-table">
+
+      <!-- Row 2: Actual vs Predicted & Test Residual Diagnostics -->
+      <div class="grid-2-col" style="margin-top: 20px;">
+        <div class="studio-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-crosshairs accent-violet"></i>
+              <span>Actual vs. Predicted Valuation Scatter</span>
+            </div>
+            <span class="status-chip chip-violet" id="badgeScatter">Test Holdout</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartScatter"></canvas>
+          </div>
+          <div class="chart-caption">Dotted red line represents ideal y = x perfect calibration.</div>
+        </div>
+
+        <div class="studio-card">
+          <div class="card-toolbar">
+            <div class="toolbar-title">
+              <i class="fa-solid fa-chart-simple accent-amber"></i>
+              <span>Residual Errors by Holdout Sample</span>
+            </div>
+            <span class="status-chip chip-amber">e = Actual − Pred</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartResiduals"></canvas>
+          </div>
+          <div class="chart-caption">Amber bars flag test instances with absolute error exceeding threshold.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Statistical Inference & ANOVA Matrix -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-solid fa-table-pivot"></i>
+            <span>Model Coefficients, Standard Errors &amp; VIF Multicollinearity Diagnostic</span>
+          </div>
+          <div class="toolbar-sub">Ordinary Least Squares parameter estimation on training split with statistical significance tests.</div>
+        </div>
+        <span class="badge-pill pill-cyan">Significance Level: α = 0.05</span>
+      </div>
+
+      <div class="table-container">
+        <table class="studio-table" id="tableCoef">
           <thead>
             <tr>
-              <th>Rank</th><th>Sample ID</th><th>Actual Profit</th><th>Predicted Profit</th>
-              <th>Residual ($)</th><th>Abs Error</th><th>% Error</th><th>Diagnostic Status</th>
+              <th>Predictor</th>
+              <th>Estimate (β)</th>
+              <th>Std. Error</th>
+              <th>t-Statistic</th>
+              <th>p-Value</th>
+              <th>95% Confidence Interval</th>
+              <th>VIF Collinearity</th>
             </tr>
           </thead>
-          <tbody id="outliersTableBody"></tbody>
+          <tbody id="tableCoefBody"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- Comparison matrix -->
-    <section class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h3><i class="fa-solid fa-table-cells" style="color: var(--primary);"></i> Method × k Comparison Matrix (Test RMSE)</h3>
-          <div class="card-subtitle">Click any cell to load that model. ★ marks each method's minimum RMSE.</div>
-        </div>
-        <span class="badge-tag badge-green"><i class="fa-solid fa-star"></i> Row best</span>
-      </div>
-      <div class="table-responsive"><table class="data-table matrix" id="matrixTable"></table></div>
-    </section>
-
-    <!-- EDA -->
-    <section class="dual-charts-grid" style="margin-top: 24px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-link" style="color: var(--primary);"></i> Correlation with Profit</h3>
-            <div class="card-subtitle">Pearson r between each spend category and Profit (all 50 startups).</div>
+    <!-- Test Outliers & Error Diagnostics -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-solid fa-triangle-exclamation accent-amber"></i>
+            <span>Test Set Holdout Diagnostics &amp; Absolute Residuals</span>
           </div>
-          <span class="badge-tag badge-blue">Data Understanding</span>
+          <div class="toolbar-sub">Individual sample performance sorted by absolute error magnitude.</div>
         </div>
-        <div class="chart-container small"><canvas id="corrChart"></canvas></div>
+        <span class="status-chip chip-amber"><i class="fa-solid fa-filter"></i> Sorted by |Residual|</span>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3><i class="fa-solid fa-map-location-dot" style="color: var(--accent-emerald);"></i> Average Profit by State</h3>
-            <div class="card-subtitle" id="stateSubtitle"></div>
+
+      <div class="table-container">
+        <table class="studio-table" id="tableOutliers">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Sample ID</th>
+              <th>Actual Value</th>
+              <th>Predicted Value</th>
+              <th>Residual (e)</th>
+              <th>Abs Error</th>
+              <th>% Error</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableOutliersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Cross-Algorithm Comparison Matrix -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-solid fa-grid-2-plus"></i>
+            <span>Method × Feature Count (k = 1 … 5) Performance Matrix (Test RMSE)</span>
           </div>
-          <span class="badge-tag badge-green">Categorical</span>
+          <div class="toolbar-sub">Click any table cell to inspect that specific algorithm and feature configuration immediately.</div>
         </div>
-        <div class="chart-container small"><canvas id="stateChart"></canvas></div>
+        <span class="badge-pill pill-emerald"><i class="fa-solid fa-star"></i> ★ = Row Optimal</span>
+      </div>
+
+      <div class="table-container">
+        <table class="studio-table matrix-table" id="tableMatrix"></table>
       </div>
     </section>
 
-    <!-- Python figures from the project folder -->
-    <section class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h3><i class="fa-brands fa-python" style="color: var(--accent-blue);"></i> Python Analysis Figures</h3>
-          <div class="card-subtitle">Generated by <code>part1_mlr.py</code> and <code>part2_forward_selection.py</code> (matplotlib).</div>
+    <!-- CRISP-DM Reusable Architecture Framework -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-solid fa-diagram-project accent-cyan"></i>
+            <span>CRISP-DM Standardized ML Workflow: Cross-Domain Architecture</span>
+          </div>
+          <div class="toolbar-sub">How the same structured 6-phase skill/pipeline transfers between 50 Startups and Boston Housing.</div>
         </div>
-        <span class="badge-tag badge-blue" id="baselineBadge"></span>
+        <span class="badge-pill pill-violet">6 Phases</span>
       </div>
-      <div class="figure-grid">
-        <figure class="figure-card">
-          <img src="assets/actual_vs_predicted.png" alt="Actual vs predicted profit scatter plot for the full OLS model" loading="lazy" />
-          <figcaption>Full OLS model — Actual vs Predicted (part1_mlr.py)</figcaption>
-        </figure>
-        <figure class="figure-card">
-          <img src="assets/forward_selection.png" alt="Forward selection RMSE and R-squared by number of features" loading="lazy" />
-          <figcaption>Forward selection — RMSE &amp; R² vs k (part2_forward_selection.py)</figcaption>
-        </figure>
+
+      <div class="crisp-flow-grid" id="crispFlowGrid"></div>
+    </section>
+
+    <!-- Exploratory Data Understanding -->
+    <section class="grid-2-col" style="margin-top: 24px;">
+      <div class="studio-card">
+        <div class="card-toolbar">
+          <div class="toolbar-title">
+            <i class="fa-solid fa-link accent-cyan"></i>
+            <span>Feature Correlation with Target</span>
+          </div>
+          <span class="status-chip chip-cyan">Pearson r</span>
+        </div>
+        <div class="chart-wrapper small">
+          <canvas id="chartCorr"></canvas>
+        </div>
+      </div>
+
+      <div class="studio-card">
+        <div class="card-toolbar">
+          <div class="toolbar-title">
+            <i class="fa-solid fa-chart-column accent-green"></i>
+            <span id="extraEdaTitle">Dataset Distribution</span>
+          </div>
+          <span class="status-chip chip-green" id="extraEdaBadge">Distribution</span>
+        </div>
+        <div class="chart-wrapper small">
+          <canvas id="chartExtraEda"></canvas>
+        </div>
       </div>
     </section>
 
-    <!-- Dataset explorer -->
-    <section class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h3><i class="fa-solid fa-database" style="color: var(--primary);"></i> Dataset Explorer</h3>
-          <div class="card-subtitle" id="dataSubtitle"></div>
+    <!-- Interactive Data Explorer -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-solid fa-database accent-cyan"></i>
+            <span>Dataset Record Browser</span>
+          </div>
+          <div class="toolbar-sub" id="dataRecordSub">Viewing records with training/testing split partition indicators.</div>
         </div>
-        <input id="dataSearch" class="input-field search" placeholder="Filter by state or value…" aria-label="Filter dataset" />
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Filter records by value..." class="studio-input search-input" />
+        </div>
       </div>
-      <div class="table-responsive tall"><table class="data-table" id="dataTable"></table></div>
+
+      <div class="table-container tall">
+        <table class="studio-table" id="tableDataRecords"></table>
+      </div>
     </section>
 
-    <!-- CRISP-DM -->
-    <section class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <div class="card-title-group">
-          <h3><i class="fa-solid fa-diagram-project" style="color: var(--primary);"></i> CRISP-DM Workflow</h3>
-          <div class="card-subtitle">Cross-Industry Standard Process for Data Mining, applied to this project.</div>
+    <!-- Python Script Artifacts & Figures -->
+    <section class="studio-card" style="margin-top: 24px;">
+      <div class="card-toolbar">
+        <div>
+          <div class="toolbar-title">
+            <i class="fa-brands fa-python accent-cyan"></i>
+            <span>Python Script Generation Artifacts</span>
+          </div>
+          <div class="toolbar-sub">Figures pre-generated by <code>part1_mlr.py</code> and <code>part2_forward_selection.py</code>.</div>
         </div>
-        <span class="badge-tag badge-blue">6 phases</span>
+        <span class="badge-pill pill-cyan">Matplotlib Backend</span>
       </div>
-      <div class="crisp-grid" id="crispGrid"></div>
+
+      <div class="artifacts-grid">
+        <div class="artifact-card">
+          <div class="artifact-media">
+            <img src="assets/actual_vs_predicted.png" alt="Actual vs. Predicted Profit plot from part1_mlr.py" loading="lazy" />
+          </div>
+          <div class="artifact-meta">
+            <strong>Actual vs. Predicted Profit</strong>
+            <span>Baseline OLS Full Model (part1_mlr.py)</span>
+          </div>
+        </div>
+        <div class="artifact-card">
+          <div class="artifact-media">
+            <img src="assets/forward_selection.png" alt="Forward Selection RMSE and R2 plot from part2_forward_selection.py" loading="lazy" />
+          </div>
+          <div class="artifact-meta">
+            <strong>Forward SFS Progression Curve</strong>
+            <span>RMSE &amp; R² vs. Feature Count (part2_forward_selection.py)</span>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
 
-  <footer>
-    <div class="footer-inner">
-      <div style="max-width: 650px;">
-        <h4 class="footer-title"><i class="fa-solid fa-building-columns"></i> 50 Startups CRISP-DM Machine Learning Project</h4>
-        <p>Developed for multiple linear regression model selection, parsimony validation, and statistical inference.
-          All numbers are precomputed by <code>compute_results.py</code> (scikit-learn + SciPy) and rendered with Vanilla HTML, CSS, JavaScript and Chart.js.</p>
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div class="brand-title" style="font-size: 16px;">
+          <span>MLR Studio</span>
+          <span class="version-tag">DIC-2</span>
+        </div>
+        <p class="footer-desc">
+          Multiple Linear Regression &amp; Parsimony Optimization System. Implemented as an automated, reusable machine learning workflow for the Kaggle 50 Startups and Boston Housing challenges.
+        </p>
       </div>
-      <div style="max-width: 550px;">
-        <h4 class="footer-sub">References &amp; Acknowledgments</h4>
-        <div class="ack-card">
-          <strong>Design &amp; Layout Reference:</strong><br />
-          <a href="https://huanchen1107.github.io/AIoT-DIC2-MultipleLR/" target="_blank" rel="noopener">AIoT-DIC2 MultipleLR Explorer</a> and
-          <a href="https://statsunlock.com/multiple-linear-regression-calculator/" target="_blank" rel="noopener">StatsUnlock MLR Calculator</a>.<br />
-          <strong>Dataset:</strong> <a href="https://www.kaggle.com/datasets/farhanmd29/50-startups" target="_blank" rel="noopener">50 Startups (Kaggle)</a>.<br />
-          <strong>Methodology:</strong> CRISP-DM.
+
+      <div class="footer-col">
+        <div class="footer-heading">Architecture &amp; Skill Design</div>
+        <ul class="footer-links">
+          <li><span>Standard: CRISP-DM 6-Phase Lifecycle</span></li>
+          <li><span>Algorithms: Lasso, Forward SFS, RFE, ElasticNet, Exhaustive</span></li>
+          <li><span>Inference: OLS, t-stat, p-values, 95% CI, VIF Multi-collinearity</span></li>
+          <li><span>Frontend: Pure Vanilla JavaScript, CSS Glassmorphism, Chart.js</span></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <div class="footer-heading">Project Submission Details</div>
+        <div class="submission-card">
+          <div><strong>Student GitHub:</strong> <a href="https://github.com/aghoniln" target="_blank" rel="noopener">aghoniln</a></div>
+          <div><strong>Repository:</strong> <a href="https://github.com/aghoniln/AIoT-DIC2-MultipleLR" target="_blank" rel="noopener">AIoT-DIC2-MultipleLR</a></div>
+          <div><strong>Live URL:</strong> <a href="https://aghoniln.github.io/AIoT-DIC2-MultipleLR/" target="_blank" rel="noopener">aghoniln.github.io/AIoT-DIC2-MultipleLR</a></div>
         </div>
       </div>
     </div>
   </footer>
 
+  <!-- Script Imports -->
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
